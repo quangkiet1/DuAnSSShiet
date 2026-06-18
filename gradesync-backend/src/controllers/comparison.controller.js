@@ -26,6 +26,10 @@ async function uploadFiles(req, res) {
   const fileB = req.files.fileB[0];
   const uploadId = uuidv4();
 
+  // Fix lỗi font chữ tiếng Việt cho tên file upload (multer đọc theo latin1)
+  fileA.originalname = Buffer.from(fileA.originalname, 'latin1').toString('utf8');
+  fileB.originalname = Buffer.from(fileB.originalname, 'latin1').toString('utf8');
+
   // Validate files can be opened
   let sheetsA, sheetsB;
   try {
