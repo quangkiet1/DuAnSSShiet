@@ -8,6 +8,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const path = require('path');
 
 const comparisonRoutes = require('./src/routes/comparison.routes');
 const templateRoutes = require('./src/routes/template.routes');
@@ -31,9 +32,33 @@ app.use(morgan('dev'));
 app.use('/api/comparisons', comparisonRoutes);
 app.use('/api/templates', templateRoutes);
 
+// Phục vụ giao diện Frontend (Local Mode)
+const path = require('path');
+const frontendDist = path.join(__dirname, '../gradesync-frontend/dist');
+app.use(express.static(frontendDist));
+
+app.get('*', (req, res) => {
+  if (req.originalUrl.startsWith('/api')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  res.sendFile(path.join(frontendDist, 'index.html'));
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Serve Frontend (cho phép chạy local offline trên máy thầy cô)
+const frontendPath = path.join(__dirname, '../gradesync-frontend/dist');
+app.use(express.static(frontendPath));
+
+// Bắt tất cả các route khác (không phải /api) và trả về Frontend React (hỗ trợ React Router)
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 // Error handler (must be last)
