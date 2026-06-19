@@ -1,0 +1,66 @@
+{
+  "name": "gradesync",
+  "version": "1.0.0",
+  "description": "Phần mềm so sánh bảng điểm Excel nội bộ trường học",
+  "main": "main.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.truong.gradesync",
+    "productName": "GradeSync",
+    "copyright": "Copyright © 2026 GradeSync",
+    "asar": false,
+    "directories": {
+      "output": "../dist-installer"
+    },
+    "win": {
+      "target": "portable",
+      "icon": "build/icon.png",
+      "certificateFile": null,
+      "certificatePassword": null,
+      "signingHashAlgorithms": null,
+      "sign": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "GradeSync",
+      "installerLanguages": [
+        "vi"
+      ],
+      "language": "1066"
+    },
+    "files": [
+      "main.js",
+      "server.js",
+      "src/**/*",
+      "public/**/*",
+      "node_modules/**/*",
+      "package.json",
+      "build/**/*"
+    ]
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^16.0.0",
+    "exceljs": "^4.4.0",
+    "express": "^4.18.2",
+    "express-async-errors": "^3.1.1",
+    "helmet": "^7.0.0",
+    "morgan": "^1.11.0",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.11.0",
+    "uuid": "^9.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^25.1.8"
+  }
+}
