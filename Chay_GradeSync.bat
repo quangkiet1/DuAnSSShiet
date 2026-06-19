@@ -18,7 +18,7 @@ if %errorlevel% neq 0 (
 
 :: Kiểm tra xem Frontend đã được build chưa (thư mục dist)
 if not exist "gradesync-frontend\dist" (
-    echo [1/3] Dang chuan bi giao dien lan dau (chi chay 1 lan)...
+    echo [1/3] Dang chuan bi giao dien lan dau - chi chay 1 lan...
     cd gradesync-frontend
     call npm install
     call npm run build
