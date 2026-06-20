@@ -1,26 +1,28 @@
 /**
  * GradeSync Backend - Express App Entry Point
+ * Dùng cho web deployment (Vercel, Railway, v.v.)
+ * Cho dev local: frontend (port 5173) → proxy → backend (port 5000)
  */
 require('dotenv').config();
 require('express-async-errors');
 
 const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const path = require('path');
+const cors    = require('cors');
+const helmet  = require('helmet');
+const morgan  = require('morgan');
+const path    = require('path');
 
 const comparisonRoutes = require('./src/routes/comparison.routes');
-const templateRoutes = require('./src/routes/template.routes');
+const templateRoutes   = require('./src/routes/template.routes');
 const { errorHandler } = require('./src/middlewares/error.middleware');
 const { initDatabase, isDatabaseConfigured } = require('./src/config/database');
 
 const app = express();
 
-// Security & Middleware
+// ── Security & Middleware ─────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin: function (origin, callback) { callback(null, true); }, // Cho phép mọi domain (kể cả Vercel)
+  origin: function (origin, callback) { callback(null, true); },
   credentials: true,
   exposedHeaders: ['Content-Disposition', 'Content-Type', 'Content-Length'],
 }));
@@ -28,54 +30,42 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-// Routes
+// ── API Routes ────────────────────────────────────────────────────────────────
 app.use('/api/comparisons', comparisonRoutes);
-app.use('/api/templates', templateRoutes);
-
-// Phục vụ giao diện Frontend (Local Mode)
-const path = require('path');
-const frontendDist = path.join(__dirname, '../gradesync-frontend/dist');
-app.use(express.static(frontendDist));
-
-app.get('*', (req, res) => {
-  if (req.originalUrl.startsWith('/api')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
-  }
-  res.sendFile(path.join(frontendDist, 'index.html'));
-});
+app.use('/api/templates',   templateRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Serve Frontend (cho phép chạy local offline trên máy thầy cô)
+// ── Serve Frontend (Production / Local Offline) ───────────────────────────────
 const frontendPath = path.join(__dirname, '../gradesync-frontend/dist');
 app.use(express.static(frontendPath));
 
-// Bắt tất cả các route khác (không phải /api) và trả về Frontend React (hỗ trợ React Router)
+// SPA Fallback — mọi route không phải /api đều trả về React index.html
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API route not found' });
+  if (req.originalUrl.startsWith('/api')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
   }
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-// Error handler (must be last)
+// ── Error Handler (phải là middleware cuối cùng) ──────────────────────────────
 app.use(errorHandler);
 
+// ── Start Server ──────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`GradeSync Backend running on http://localhost:${PORT}`);
-  console.log('Uploads and result files are processed in memory, not saved to local folders.');
 
   initDatabase().then((ready) => {
     if (ready) {
-      console.log('PostgreSQL storage is ready.');
+      console.log('✅ PostgreSQL storage is ready.');
     } else if (isDatabaseConfigured()) {
-      console.log('PostgreSQL is configured but not reachable; using memory fallback for now.');
+      console.log('⚠️  PostgreSQL configured but not reachable — using memory fallback.');
     } else {
-      console.log('DATABASE_URL is not configured; using memory fallback.');
+      console.log('ℹ️  DATABASE_URL not set — using in-memory storage.');
     }
   });
 });
